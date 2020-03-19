@@ -5,6 +5,13 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
+import firebaseConfig from './config';
+import * as firebase from 'firebase';
+import 'firebase/firestore';
+if (firebase.apps.length === 0) {
+    firebase.initializeApp(firebaseConfig)
+}
+export const firestore = firebase.firestore()
 ReactDOM.render(
     <Provider store={store}>
         <App />

@@ -1,32 +1,59 @@
 import React, { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux';
-import { NumberActions } from './redux/number/action'
-import { PhotoActions } from './redux/photo/action'
-import { bindActionCreators } from 'redux';
-export default () => {
-  const actionsNumberActions = bindActionCreators(NumberActions, useDispatch());
-  const actionsPhotoActions = bindActionCreators(PhotoActions, useDispatch());
-  const number = useSelector(state => state.number) //number = 0
-  const photo = useSelector(state => state.photo)
+import { firestore } from './index'
+const App = () => {
   useEffect(() => {
-    console.log(photo)
-  }, [])
-  const [img, setImg] = useState('');
-  const change = () => {
-    actionsPhotoActions.SHOWPHOTO(img) 
+    Data_firebase()
+  })
+  const [tasks, setTasks] = useState([
+  ]);
+  const [name, setName] = useState('');
+  const Data_firebase = () => {
+    firestore.collection('task').onSnapshot((snapshot) => {
+      let tasksfirebase = snapshot.docs.map(data => {
+        const { id, name } = data.data()
+        return { id, name }
+      })
+      setTasks(tasksfirebase)
+    })
+  }
+  const deleteTask = (id) => {
+    firestore.collection('task').doc(id + '').delete()
+  }
+  const updateTask = (id) => {
+    firestore.collection('task').doc(id + '').set({ id, name })
+  }
+  const renderTask = () => {
+    if (tasks && tasks.length) {
+      return tasks.map((text, index) => {
+        return (
+          <ul key={index}>
+            <li>{text.id}:{text.name}</li>
+            <button onClick={() => deleteTask(text.id)}>delete</button>
+            <button onClick={() => updateTask(text.id)}>update</button>
+          </ul>
+        )
+      })
+    }
+    else {
+      return <li>No task</li>
+    }
+  }
+  const addTask = () => {
+    let id = tasks.length !== 0 ? tasks[tasks.length - 1].id + 1 : 1
+    firestore.collection('task').doc(id.toString()).set({ id, name })
   }
   return (
     <div>
-      <img src={photo} />
-      <h2>Counter {number} </h2>
-      <button onClick={() => actionsNumberActions.INCREMENT(number)}>INCREMENT</button>
-      <button onClick={() => actionsNumberActions.DECREMENT(number)}>DECREMENT</button>
       <div>
-        <label>PHOTO</label>
-        <input onChange={(e) => setImg(e.target.value)} />
-        <button onClick={change}>SHOWPHOTO</button>
+        <input onChange={(e) => setName(e.target.value)} />
+        <div>
+          <button onClick={addTask}>Submit</button>
+        </div>
       </div>
+      {
+        renderTask()
+      }
     </div>
   )
 }
-y
+export default App;
